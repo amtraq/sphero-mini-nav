@@ -46,6 +46,7 @@ class ControllableSphero(TraceableSphero):
         # LIGHTS
         self.lights = False
 
+
         # Virtual Dot
         self.dot_draw_radius = 2
         self.is_inside_dot = False
@@ -59,7 +60,6 @@ class ControllableSphero(TraceableSphero):
         self.bounce_thread = None
         self._run_bounce = True
         self.border = 130
-
 
     def _configure_sensor_streaming(self):
         self._ssc.num_packets = SensorStreamingConfig.STREAM_FOREVER
@@ -241,11 +241,13 @@ class ControllableSphero(TraceableSphero):
         self.is_calibrating = True
         self.vector_control.stop()
         # self.calibrate_direction()
+\
         self.vector_control.start()
         self.is_calibrating = False
 
     def set_x(self, value):
         #self.vector_control.turn_rate = math.tan(value) * -5
+
         self.vector_control.vector.x = value * 75.0
 
     def set_y(self, value):
@@ -273,6 +275,7 @@ class ControllableSphero(TraceableSphero):
             return self.device.setLEDColor(255, 0, 0)
         self.lights = False
         return self.device.setLEDColor(0, 0, 0)
+
 
     @handle_exceptions
     def ping(self):

@@ -21,6 +21,7 @@ class sphero_mini():
                                    # 4 = Acknowledgements
 
         self._seq = 0x00 # sequence number
+
         self.v_batt = None # will be updated with battery voltage when sphero.getBatteryVoltage() is called
         self.firmware_version = [] # will be updated with firware version when sphero.returnMainApplicationVersion() is called
 
@@ -45,7 +46,7 @@ class sphero_mini():
 
         if self.verbosity > 1:
             print("[INIT] Read all characteristics and descriptors")
-        
+
         # Get characteristics and descriptors
         self.API_V2_characteristic = self.p.getCharacteristics(uuid="00010002-574f-4f20-5370-6865726f2121")[0]
         self.AntiDOS_characteristic = self.p.getCharacteristics(uuid="00020005-574f-4f20-5370-6865726f2121")[0]
@@ -80,7 +81,6 @@ class sphero_mini():
         self.wake()
         self.stabilization(False) # Turn off stabilization
         self.resetHeading() # Reset heading
-        # self.stabilization(True) # Turn on stabilization
 
         # self.configureCollisionDetection(seq=self.seq)
 
@@ -163,11 +163,12 @@ class sphero_mini():
             print("[SEND {}] Setting main LED colour to [{}, {}, {}]".format(self.sequence, red, green, blue))
         
         return self._write(characteristic = self.API_V2_characteristic,
+
                   devID = deviceID['userIO'], # 0x1a
                   commID = userIOCommandIDs["allLEDs"], # 0x0e
                   seq=self.seq,
                   payload = [0x00, 0x0e, red, green, blue])
-        
+
     def setBackLEDIntensity(self, brightness=None):
         '''
         Set device LED backlight intensity based on 0-255 values
@@ -183,6 +184,7 @@ class sphero_mini():
                   seq=self.seq,
                   payload = [0x00, 0x01, brightness])
 
+
     def roll(self, speed=None, heading=None):
         '''
         Start to move the Sphero at a given direction and speed.
@@ -194,6 +196,7 @@ class sphero_mini():
         '''
         # if self.verbosity > 2:
         print("[SEND {}] Rolling with speed {} and heading {}".format(self.seq, speed, heading))
+
     
         if abs(speed) > 255:
             print("WARNING: roll speed parameter outside of allowed range (-255 to +255)")
@@ -205,13 +208,12 @@ class sphero_mini():
         speedL = speed & 0xFF
         headingH = (heading & 0xFF00) >> 8
         headingL = heading & 0xFF
-        # self.stabilization(False) # Turn off stabilization
+
         self._write(characteristic = self.API_V2_characteristic,
                   devID = deviceID['driving'],
                   commID = drivingCommands["driveWithHeading"],
                   seq=self.seq,
                   payload = [speedL, headingH, headingL, speedH])
-        # self.stabilization(True) # Turn off stabilization
 
     def resetHeading(self):
         '''
@@ -309,6 +311,7 @@ class sphero_mini():
         print("Seq #" + str(seq) + " ACKED")
 
     def _mark_as_sent(self, seq):
+
         """
         Helper method
         Returns the response package with the given sequence number
@@ -317,7 +320,6 @@ class sphero_mini():
         :raise: IndexError
         :return: The request object
         """
-        
         # add seq num to the queue of requests waiting a response
         with self._response_lock:
             if seq not in self._requests_waiting_response:
@@ -328,6 +330,7 @@ class sphero_mini():
             with self._response_lock:
                 if packet in self._requests_waiting_response:
                     self._requests_waiting_response.remove(packet)
+
         except KeyError:
             pass
         
@@ -358,6 +361,7 @@ class sphero_mini():
                     commID,
                     seq] + payload # concatenate payload list
 
+
         checksum = 0
         for num in sendBytes[1:]:
             checksum = (checksum + num) & 0xFF # bitwise "and to get modulo 256 sum of appropriate bytes
@@ -386,6 +390,7 @@ class sphero_mini():
             except:
                 print("There was a problem waiting for a response...")
 
+
 # =======================================================================
 # The following functions are experimental:
 # =======================================================================
@@ -399,6 +404,7 @@ class sphero_mini():
                                      method = 0x01, # Must be 0x01        
                                      callback = None,
                                      seq=None):
+
         '''
         Appears to function the same as other Sphero models, however speed settings seem to have no effect. 
         NOTE: Setting to zero seems to cause bluetooth errors with the Sphero Mini/bluepy library - set to 
@@ -621,6 +627,7 @@ class MyDelegate(btle.DefaultDelegate):
                 checksum = 0xff - checksum # bitwise 'not' to invert checksum bits
                 if checksum != chsum: # check computed checksum against that recieved in the packet
                     print("Warning: notification packet checksum failed") #, self.notificationPacket, file=sys.stderr)
+
                     self.notificationPacket = [] # Discard this packet
                     return # exit
 

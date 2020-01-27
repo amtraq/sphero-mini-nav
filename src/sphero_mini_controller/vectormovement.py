@@ -215,6 +215,7 @@ class SpheroVectorController(object):
         :rtype: bool
         """
         return (speed != self._last_speed) and (direction != self._last_direction)
+
         # speed_changed = self._last_vector.magnitude != self._vector.magnitude
         # orientation_changed = self._last_vector.angle != self._vector.angle
         # return speed_changed or self.turn_rate or orientation_changed
