@@ -313,9 +313,9 @@ class sphero_mini():
 
     def _add_received_response(self, response_object):
         if (response_object > 0):
-            # with self._response_lock:
-            if response_object in self._requests_waiting_response:
-                self._requests_waiting_response.remove(response_object)
+            with self._response_lock:
+                if response_object in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(response_object)
         self.sphero_delegate.clear_notification()
         self._notify_request_received(response_object)
 
@@ -333,9 +333,9 @@ class sphero_mini():
         """
         
         # add seq num to the queue of requests waiting a response
-        # with self._response_lock:
-        if seq not in self._requests_waiting_response:
-            self._requests_waiting_response.append(seq)
+        with self._response_lock:
+            if seq not in self._requests_waiting_response:
+                self._requests_waiting_response.append(seq)
 
         # if seq > 0x00:
         #     print("removing " + str(seq))
@@ -352,9 +352,9 @@ class sphero_mini():
         #     pass
         
         try:
-            # with self._response_lock:
-            if packet in self._requests_waiting_response:
-                self._requests_waiting_response.remove(packet)
+            with self._response_lock:
+                if packet in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(packet)
         except KeyError:
             pass
         
