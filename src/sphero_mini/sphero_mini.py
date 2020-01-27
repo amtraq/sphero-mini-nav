@@ -39,7 +39,7 @@ class sphero_mini():
 
         self._requests_waiting_response = []
         self._receiver_thread = None
-        self.response_timeout = 25.0
+        self.response_timeout = 2.0
         self._run_receive = True
         # self._packages = []   # outgoing packets
         # self._responses = []   # received responses
@@ -301,13 +301,13 @@ class sphero_mini():
         event = self._send(characteristic,devID,commID,seq,payload)
 
         if event.wait(self.response_timeout):
-            res = self._mark_as_sent(seq)
+            # res = self._mark_as_sent(seq)
 
             # if res.success:
             #     return res
             # else:
             #     print('Request failed: ' + res.msg)
-            return res
+            return True
         else:
             sendBytes = [sendPacketConstants["StartOfPacket"],
                     sum([flags["resetsInactivityTimeout"], flags["requestsResponse"]]),
@@ -317,9 +317,11 @@ class sphero_mini():
             self._clean_up_failed_request(seq)
 
     def _add_received_response(self, response_object):
-        with self._response_lock:
-            # self._responses.append(response_object)
-            self._requests_waiting_response.remove(response_object)
+        if (response_object > 0):
+            with self._response_lock:
+                # self._responses.append(response_object)
+                if response_object in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(response_object)
         self._notify_request_received(response_object)
 
     def _notify_request_received(self, seq):
@@ -356,7 +358,8 @@ class sphero_mini():
         
         try:
             with self._response_lock:
-                self._requests_waiting_response.remove(packet)
+                if packet in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(packet)
         except KeyError:
             pass
         
@@ -414,8 +417,9 @@ class sphero_mini():
         try:
             #send to specified characteristic:
             characteristic.write(output, withResponse = True)
-        except e:
-            print(e)
+        except:
+            print("There was an error sending a command...")
+        self._mark_as_sent(seq)
         return event
 
 
@@ -423,8 +427,8 @@ class sphero_mini():
 
     def _response_reciever(self):
         while(1):
-            if (self.p.waitForNotifications(1)):
-                print("Received SEQ #:" + str(self.sphero_delegate.notification_seq))
+            if (self.p.waitForNotifications(.5)):
+                # print("Received SEQ #:" + str(self.sphero_delegate.notification_seq))
                 self._add_received_response(self.sphero_delegate.notification_seq)
                 # self._get_response(self.sphero_delegate.notification_seq)
 
