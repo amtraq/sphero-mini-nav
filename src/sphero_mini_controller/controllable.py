@@ -164,7 +164,7 @@ class ControllableSphero(TraceableSphero):
             button_press={
                 # constants.BUTTON_START: self.disconnect,
 
-                # constants.BUTTON_CIRCLE: self.calibrate,
+                constants.BUTTON_CIRCLE: self.calibrate,
                 constants.BUTTON_SQUARE: self.toggle_lights,
                 constants.BUTTON_CROSS: self.lights_random_color,
                 # constants.BUTTON_TRIANGLE: self.toggle_lights,
@@ -239,11 +239,10 @@ class ControllableSphero(TraceableSphero):
         self._ps4_controller = ps4_controller
         self._map_controls(ps4_controller)
 
-    @handle_exceptions
     def calibrate(self):
         self.is_calibrating = True
         self.vector_control.stop()
-        self.calibrate_direction()
+        # self.calibrate_direction()
         self.vector_control.start()
         self.is_calibrating = False
 
