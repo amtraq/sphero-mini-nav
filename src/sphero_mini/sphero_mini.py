@@ -309,19 +309,14 @@ class sphero_mini():
             #     print('Request failed: ' + res.msg)
             return True
         else:
-            sendBytes = [sendPacketConstants["StartOfPacket"],
-                    sum([flags["resetsInactivityTimeout"], flags["requestsResponse"]]),
-                    devID,
-                    commID,
-                    seq] + payload # concatenate payload list
             self._clean_up_failed_request(seq)
 
     def _add_received_response(self, response_object):
         if (response_object > 0):
-            with self._response_lock:
-                # self._responses.append(response_object)
-                if response_object in self._requests_waiting_response:
-                    self._requests_waiting_response.remove(response_object)
+            # with self._response_lock:
+            if response_object in self._requests_waiting_response:
+                self._requests_waiting_response.remove(response_object)
+        self.sphero_delegate.clear_notification()
         self._notify_request_received(response_object)
 
     def _notify_request_received(self, seq):
@@ -338,9 +333,9 @@ class sphero_mini():
         """
         
         # add seq num to the queue of requests waiting a response
-        with self._response_lock:
-            if seq not in self._requests_waiting_response:
-                self._requests_waiting_response.append(seq)
+        # with self._response_lock:
+        if seq not in self._requests_waiting_response:
+            self._requests_waiting_response.append(seq)
 
         # if seq > 0x00:
         #     print("removing " + str(seq))
@@ -357,9 +352,9 @@ class sphero_mini():
         #     pass
         
         try:
-            with self._response_lock:
-                if packet in self._requests_waiting_response:
-                    self._requests_waiting_response.remove(packet)
+            # with self._response_lock:
+            if packet in self._requests_waiting_response:
+                self._requests_waiting_response.remove(packet)
         except KeyError:
             pass
         
