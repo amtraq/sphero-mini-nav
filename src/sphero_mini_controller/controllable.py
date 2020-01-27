@@ -259,11 +259,11 @@ class ControllableSphero(TraceableSphero):
 
     # @handle_exceptions
     def lights_random_color(self):
-        print("rndom color")
+        # print("rndom color")
         r = random.randrange(0, 255)
         g = random.randrange(0, 255)
         b = random.randrange(0, 255)
-        print ("Lights random color: ", self.device.setLEDColor(r, g, b))
+        self.device.setLEDColor(r, g, b)
 
     # @handle_exceptions
     def toggle_lights(self):

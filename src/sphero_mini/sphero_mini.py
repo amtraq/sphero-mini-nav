@@ -80,7 +80,7 @@ class sphero_mini():
         self.wake()
         self.stabilization(False) # Turn off stabilization
         self.resetHeading() # Reset heading
-        self.stabilization(True) # Turn on stabilization
+        # self.stabilization(True) # Turn on stabilization
 
         # self.configureCollisionDetection(seq=self.seq)
 
@@ -205,13 +205,13 @@ class sphero_mini():
         speedL = speed & 0xFF
         headingH = (heading & 0xFF00) >> 8
         headingL = heading & 0xFF
-        self.stabilization(False) # Turn off stabilization
+        # self.stabilization(False) # Turn off stabilization
         self._write(characteristic = self.API_V2_characteristic,
                   devID = deviceID['driving'],
                   commID = drivingCommands["driveWithHeading"],
                   seq=self.seq,
                   payload = [speedL, headingH, headingL, speedH])
-        self.stabilization(True) # Turn off stabilization
+        # self.stabilization(True) # Turn off stabilization
 
     def resetHeading(self):
         '''
@@ -620,7 +620,7 @@ class MyDelegate(btle.DefaultDelegate):
                     checksum = (checksum + num) & 0xFF # bitwise "and to get modulo 256 sum of appropriate bytes
                 checksum = 0xff - checksum # bitwise 'not' to invert checksum bits
                 if checksum != chsum: # check computed checksum against that recieved in the packet
-                    print("Warning: notification packet checksum failed", self.notificationPacket, file=sys.stderr)
+                    print("Warning: notification packet checksum failed") #, self.notificationPacket, file=sys.stderr)
                     self.notificationPacket = [] # Discard this packet
                     return # exit
 
