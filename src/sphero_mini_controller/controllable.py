@@ -241,7 +241,6 @@ class ControllableSphero(TraceableSphero):
         self.is_calibrating = True
         self.vector_control.stop()
         # self.calibrate_direction()
-\
         self.vector_control.start()
         self.is_calibrating = False
 
