@@ -16,7 +16,6 @@ class PS4C(object):
 
         # Disable callbacks
         self.disabled = False
-
         self.in_use = False
 
     def clear_all_callbacks(self):
