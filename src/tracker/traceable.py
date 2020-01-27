@@ -1,9 +1,7 @@
 from copy import copy, deepcopy
-import tracker
-from tracker.graphics import ImageGraphics as Ig
-from tracker.sample import TrackingSample
-from util import Color
-from util import Vector2D
+from tracker import *
+from util import color
+from util import vector
 
 
 class TraceableObject(object):

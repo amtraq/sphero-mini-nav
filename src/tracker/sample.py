@@ -1,4 +1,4 @@
-from util import Vector2D
+from util import vector
 
 
 class TrackingSample(object):
