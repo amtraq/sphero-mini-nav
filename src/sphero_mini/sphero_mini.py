@@ -160,11 +160,13 @@ class sphero_mini():
         if self.verbosity > 2:
             print("[SEND {}] Setting main LED colour to [{}, {}, {}]".format(self.sequence, red, green, blue))
         
-        self._write(characteristic = self.API_V2_characteristic,
+        return self._write(characteristic = self.API_V2_characteristic,
                   devID = deviceID['userIO'], # 0x1a
                   commID = userIOCommandIDs["allLEDs"], # 0x0e
                   seq=self.seq,
                   payload = [0x00, 0x0e, red, green, blue])
+
+        
 
         # self.getAcknowledgement("LED/backlight")
 
@@ -381,9 +383,11 @@ class sphero_mini():
                     commID,
                     seq] + payload # concatenate payload list
 
-        if not self._requests_waiting_response.keys in [seq]:
+        # if not self._requests_waiting_response.keys in [seq]:
+
+        if seq not in self._requests_waiting_response.keys:
             self._requests_waiting_response[seq] = event
-            self._packages.append(sendBytes)
+            self._packages.append(seq)
         else:
             print("Too many outgoing packages in send queue")
 
