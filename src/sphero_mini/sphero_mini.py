@@ -385,7 +385,7 @@ class sphero_mini():
 
         # if not self._requests_waiting_response.keys in [seq]:
 
-        if seq not in self._requests_waiting_response.keys:
+        if seq not in self._requests_waiting_response.keys():
             self._requests_waiting_response[seq] = event
             self._packages.append(seq)
         else:

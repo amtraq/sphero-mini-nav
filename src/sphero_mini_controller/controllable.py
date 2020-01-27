@@ -44,7 +44,7 @@ class ControllableSphero(TraceableSphero):
         self.collision_detected = False
 
         # LIGHTS
-        self.lights = True
+        self.lights = False
 
         # Virtual Dot
         self.dot_draw_radius = 2
