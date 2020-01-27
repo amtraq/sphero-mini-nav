@@ -82,7 +82,7 @@ class sphero_mini():
         self.resetHeading() # Reset heading
         self.stabilization(True) # Turn on stabilization
 
-        self.configureCollisionDetection()
+        self.configureCollisionDetection(seq=self.seq)
 
         # Finished initializing:
         if self.verbosity > 1:
@@ -377,7 +377,7 @@ class sphero_mini():
 
 
     def _response_reciever(self):
-        while(self._requests_waiting_response.__len__ > 0 and self._run_receive):
+        while(len(self._requests_waiting_response) > 0 and self._run_receive):
             try:
                 if (self.p.waitForNotifications(1)):
                     self._add_received_response(self.sphero_delegate.notification_seq)
@@ -395,7 +395,8 @@ class sphero_mini():
                                      ySpeed = 50, 
                                      deadTime = 50, # in 10 millisecond increments
                                      method = 0x01, # Must be 0x01        
-                                     callback = None):
+                                     callback = None,
+                                     seq=None):
         '''
         Appears to function the same as other Sphero models, however speed settings seem to have no effect. 
         NOTE: Setting to zero seems to cause bluetooth errors with the Sphero Mini/bluepy library - set to 
@@ -413,16 +414,19 @@ class sphero_mini():
             speed, then added to xThreshold, yThreshold to generate the final threshold value.
         '''
         
-        if self.verbosity > 2:
-            print("[SEND {}] Configuring collision detection".format(self.sequence))
+        # if self.verbosity > 2:
+        print("[SEND {}] Configuring collision detection".format(seq))
 
         self._run_receive = True
         self._start_receiver()
-    
+
+        payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
+
         self._send(self.API_V2_characteristic,
                    devID=deviceID['sensor'],
                    commID=sensorCommands['configureCollision'],
-                   payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime])
+                   payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime],
+                   seq=seq)
 
         self.collision_detection_callback = callback
 
