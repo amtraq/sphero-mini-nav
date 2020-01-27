@@ -1,6 +1,5 @@
 import time
 
-
 def calc_fps(t0, t1):
     """
     Calculates the current update rate from the two given time samples

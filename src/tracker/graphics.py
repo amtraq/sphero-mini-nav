@@ -1,10 +1,7 @@
 import numpy as np
 
 import cv2
-from util import Color
-
-from util.vector import Vector2D
-
+from util import vector, color
 
 class DrawError(ValueError):
     pass

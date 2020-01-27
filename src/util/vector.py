@@ -1,6 +1,5 @@
 import math
 
-
 class Vector2D(object):
     """
     A class for representing a 2D vector with its start point in origin
