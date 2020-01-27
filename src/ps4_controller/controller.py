@@ -162,7 +162,6 @@ class PS4C(object):
         Helper method: Triggers a on button press cb for the given button down event
         :param e: Pygame.event
         """
-        print("Handle button press")
         self._trigger_cb(self._button_release_callbacks, e.button)
 
     def _handle_button_release(self, e):

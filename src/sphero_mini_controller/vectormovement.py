@@ -33,7 +33,7 @@ class SpheroVectorController(object):
         self._vector = vector.Vector2D(0, 0)
         self._last_vector = self._vector.copy()
 
-        self.turn_rate = 0.0
+        self.turn_rate = 10.0
 
         # Keep track of last heading if speed vector is zero
         self._heading = vector.Vector2D(1.0, 0)
@@ -214,7 +214,8 @@ class SpheroVectorController(object):
         :return: True if movement has changed, False else
         :rtype: bool
         """
-        return (speed != self._last_speed) or (direction != self._last_direction)
+        return (speed != self._last_speed) and (direction != self._last_direction)
+
         # speed_changed = self._last_vector.magnitude != self._vector.magnitude
         # orientation_changed = self._last_vector.angle != self._vector.angle
         # return speed_changed or self.turn_rate or orientation_changed

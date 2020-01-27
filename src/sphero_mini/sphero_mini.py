@@ -5,7 +5,6 @@ import struct
 import time
 import sys
 import threading
-# from .request import *
 
 class sphero_mini():
     def __init__(self, MACAddr, verbosity = 4, user_delegate = None):
@@ -20,15 +19,15 @@ class sphero_mini():
                                    # 2 = Init messages
                                    # 3 = Recieved commands
                                    # 4 = Acknowledgements
-        self._dev = 0x00
-        self._seq = 0x00
-        self.sequence = 1
+
+        self._seq = 0x00 # sequence number
+
         self.v_batt = None # will be updated with battery voltage when sphero.getBatteryVoltage() is called
         self.firmware_version = [] # will be updated with firware version when sphero.returnMainApplicationVersion() is called
 
         if self.verbosity > 0:
             print("[INFO] Connecting to", MACAddr)
-        self.p = Peripheral(MACAddr, "random") # connect
+        self.p = Peripheral(MACAddr, "random") # connect to provided mac address
 
         if self.verbosity > 1:
             print("[INIT] Initializing")
@@ -37,18 +36,17 @@ class sphero_mini():
         self.sphero_delegate = MyDelegate(self, user_delegate) # Pass a reference to this instance when initializing
         self.p.setDelegate(self.sphero_delegate)
 
-        self._requests_waiting_response = {}
+        self._requests_waiting_response = []
         self._receiver_thread = None
-        self.response_timeout = 25.0
-        self._run_receive = True
-        self._packages = []   # outgoing packets
-        self._responses = []   # received responses
+        self.response_timeout = 2.0
+        self._run_receive = False
 
         self._response_lock = threading.RLock()
         self._seq_lock = threading.RLock()
 
         if self.verbosity > 1:
             print("[INIT] Read all characteristics and descriptors")
+
         # Get characteristics and descriptors
         self.API_V2_characteristic = self.p.getCharacteristics(uuid="00010002-574f-4f20-5370-6865726f2121")[0]
         self.AntiDOS_characteristic = self.p.getCharacteristics(uuid="00020005-574f-4f20-5370-6865726f2121")[0]
@@ -78,8 +76,13 @@ class sphero_mini():
             print("[INIT] Configuring API dectriptor")
         self.API_descriptor.write(struct.pack('<bb', 0x01, 0x00), withResponse = True)
 
-        self._start_receiver()
+        # currently the asynchronous receiver is disabled
+        # self._start_receiver()
         self.wake()
+        self.stabilization(False) # Turn off stabilization
+        self.resetHeading() # Reset heading
+
+        # self.configureCollisionDetection(seq=self.seq)
 
         # Finished initializing:
         if self.verbosity > 1:
@@ -99,7 +102,7 @@ class sphero_mini():
 
     def _start_receiver(self):
         """
-        Starts the asynchronous package receiver
+        Starts the asynchronous receiver
         """
         if not self._receiver_thread:
             self._run_receive = True
@@ -109,7 +112,7 @@ class sphero_mini():
 
     def _stop_receiver(self):
         """
-        Stops the asynchronous package receiver
+        Stops the asynchronous receiver
         """
         self._run_receive = False
         self._receiver_thread = None
@@ -135,7 +138,6 @@ class sphero_mini():
                    seq=self.seq,
                    payload=[]) # empty payload
 
-        # self.getAcknowledgement("Wake")
 
     def sleep(self, deepSleep=False):
         '''
@@ -160,13 +162,12 @@ class sphero_mini():
         if self.verbosity > 2:
             print("[SEND {}] Setting main LED colour to [{}, {}, {}]".format(self.sequence, red, green, blue))
         
-        self._write(characteristic = self.API_V2_characteristic,
+        return self._write(characteristic = self.API_V2_characteristic,
+
                   devID = deviceID['userIO'], # 0x1a
                   commID = userIOCommandIDs["allLEDs"], # 0x0e
                   seq=self.seq,
                   payload = [0x00, 0x0e, red, green, blue])
-
-        # self.getAcknowledgement("LED/backlight")
 
     def setBackLEDIntensity(self, brightness=None):
         '''
@@ -183,7 +184,6 @@ class sphero_mini():
                   seq=self.seq,
                   payload = [0x00, 0x01, brightness])
 
-        # self.getAcknowledgement("LED/backlight")
 
     def roll(self, speed=None, heading=None):
         '''
@@ -194,8 +194,9 @@ class sphero_mini():
         Note: the zero heading should be set at startup with the resetHeading method. Otherwise, it may
         seem that the sphero doesn't honor the heading argument
         '''
-        if self.verbosity > 2:
-            print("[SEND {}] Rolling with speed {} and heading {}".format(self.sequence, speed, heading))
+        # if self.verbosity > 2:
+        print("[SEND {}] Rolling with speed {} and heading {}".format(self.seq, speed, heading))
+
     
         if abs(speed) > 255:
             print("WARNING: roll speed parameter outside of allowed range (-255 to +255)")
@@ -207,13 +208,12 @@ class sphero_mini():
         speedL = speed & 0xFF
         headingH = (heading & 0xFF00) >> 8
         headingL = heading & 0xFF
+
         self._write(characteristic = self.API_V2_characteristic,
                   devID = deviceID['driving'],
                   commID = drivingCommands["driveWithHeading"],
                   seq=self.seq,
                   payload = [speedL, headingH, headingL, speedH])
-
-        # self.getAcknowledgement("Roll")
 
     def resetHeading(self):
         '''
@@ -230,8 +230,6 @@ class sphero_mini():
                   seq=self.seq,
                   payload = []) #empty payload
 
-        # self.getAcknowledgement("Heading")
-
     def returnMainApplicationVersion(self):
         '''
         Sends command to return application data in a notification
@@ -244,8 +242,6 @@ class sphero_mini():
                    commID = SystemInfoCommands['mainApplicationVersion'],
                    seq=self.seq,
                    payload = []) # empty
-
-        # self.getAcknowledgement("Firmware")
 
     def getBatteryVoltage(self):
         '''
@@ -260,8 +256,6 @@ class sphero_mini():
                    commID=powerCommandIDs['batteryVoltage'],
                    seq=self.seq,
                    payload=[]) # empty
-
-        # self.getAcknowledgement("Battery")
 
     def stabilization(self, stab = True):
         '''
@@ -281,8 +275,6 @@ class sphero_mini():
                    seq=self.seq,
                    payload=[val])
 
-        # self.getAcknowledgement("Stabilization")
-
     def wait(self, delay):
         '''
         This is a non-blocking delay command. It is similar to time.sleep(), except it allows asynchronous 
@@ -295,38 +287,31 @@ class sphero_mini():
                 break
 
     def _write(self, characteristic=None, devID=None, commID=None, seq=None, payload=[]):
-        print("Writing SEQ #:" + str(seq))
-        event = self._send(characteristic,devID,commID,seq,payload)
+        # print("Writing SEQ #:" + str(seq))
+        # event = 
+        self._send(characteristic,devID,commID,seq,payload)
 
-        if event.wait(self.response_timeout):
-            res = self._get_response(seq)
-
-            # if res.success:
-            #     return res
-            # else:
-            #     print('Request failed: ' + res.msg)
-            return res
+        # if event.wait(self.response_timeout):
+        if self._send(characteristic,devID,commID,seq,payload):
+            return True
         else:
-            sendBytes = [sendPacketConstants["StartOfPacket"],
-                    sum([flags["resetsInactivityTimeout"], flags["requestsResponse"]]),
-                    devID,
-                    commID,
-                    seq] + payload # concatenate payload list
+            print("Cleaning up failed seq #" + str(seq))
             self._clean_up_failed_request(seq)
+            return False
 
     def _add_received_response(self, response_object):
-        with self._response_lock:
-            self._responses.append(response_object)
+        if (response_object > 0):
+            with self._response_lock:
+                if response_object in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(response_object)
+        self.sphero_delegate.clear_notification()
         self._notify_request_received(response_object)
 
     def _notify_request_received(self, seq):
-        try:
-            self._requests_waiting_response.pop(seq).set()
-        except KeyError:
-            # Probably received the message to late
-            pass
+        print("Seq #" + str(seq) + " ACKED")
 
-    def _get_response(self, seq):
+    def _mark_as_sent(self, seq):
+
         """
         Helper method
         Returns the response package with the given sequence number
@@ -335,22 +320,17 @@ class sphero_mini():
         :raise: IndexError
         :return: The request object
         """
-        
-        if seq > 0x00:
-            print("removing " + str(seq))
-            with self._response_lock:
-                res = next((res for res in self._responses if res == seq), None)
-                if res:
-                    self._responses.remove(res)
-                return res
+        # add seq num to the queue of requests waiting a response
+        with self._response_lock:
+            if seq not in self._requests_waiting_response:
+                self._requests_waiting_response.append(seq)
 
-    def _clean_up_failed_request(self, packet):
+    def _clean_up_failed_request(self, packet):        
         try:
-            self._packages.remove(packet)
-        except ValueError:
-            pass
-        try:
-            self._requests_waiting_response.pop(packet)
+            with self._response_lock:
+                if packet in self._requests_waiting_response:
+                    self._requests_waiting_response.remove(packet)
+
         except KeyError:
             pass
         
@@ -373,7 +353,7 @@ class sphero_mini():
         - End byte: always 0xD8
 
         '''
-        event = threading.Event()
+        # event = threading.Event()
 
         sendBytes = [sendPacketConstants["StartOfPacket"],
                     sum([flags["resetsInactivityTimeout"], flags["requestsResponse"]]),
@@ -381,18 +361,7 @@ class sphero_mini():
                     commID,
                     seq] + payload # concatenate payload list
 
-        if not self._requests_waiting_response.keys in [seq]:
-            self._requests_waiting_response[seq] = event
-            self._packages.append(sendBytes)
-        else:
-            print("Too many outgoing packages in send queue")
 
-
-        # Compute and append checksum and add EOP byte:
-        # From Sphero docs: "The [checksum is the] modulo 256 sum of all the bytes
-        #                   from the device ID through the end of the data payload,
-        #                   bit inverted (1's complement)"
-        # For the sphero mini, the flag bits must be included too:
         checksum = 0
         for num in sendBytes[1:]:
             checksum = (checksum + num) & 0xFF # bitwise "and to get modulo 256 sum of appropriate bytes
@@ -402,58 +371,25 @@ class sphero_mini():
         # Convert numbers to bytes
         output = b"".join([x.to_bytes(1, byteorder='big') for x in sendBytes])
 
-
         try:
             #send to specified characteristic:
             characteristic.write(output, withResponse = True)
-        except e:
-            print(e)
-        return event
-
-
+            return True
+        except:
+            print("There was an error sending a command...")
+            return False
+        self._mark_as_sent(seq)
+        # return event
 
 
     def _response_reciever(self):
-        while(1):
-            if (self.p.waitForNotifications(1)):
-                print("Received SEQ #:" + str(self.sphero_delegate.notification_seq))
-                self._add_received_response(self.sphero_delegate.notification_seq)
-                # self._get_response(self.sphero_delegate.notification_seq)
+        while(len(self._requests_waiting_response) > 0 and self._run_receive):
+            try:
+                if (self.p.waitForNotifications(1)):
+                    self._add_received_response(self.sphero_delegate.notification_seq)
+            except:
+                print("There was a problem waiting for a response...")
 
-                # if self.sphero_delegate.notification_seq == self.sequence-1: # use one less than sequence, because _send function increments it for next send. 
-                    
-                    # if self.verbosity > 3:
-                    #     print("[RESP {}] {}".format(self.sequence-1, self.sphero_delegate.notification_ack))
-                    # self.sphero_delegate.clear_notification()
-                    # break
-                # elif self.sphero_delegate.notification_seq >= 0:
-                #     print("Unexpected ACK. Expected: {}/{}, received: {}/{}".format(
-                #         ack, self.sequence, self.sphero_delegate.notification_ack.split()[0],
-                #         self.sphero_delegate.notification_seq),
-                #         file=sys.stderr)
-
-
-    def getAcknowledgement(self, ack):
-        #wait up to 10 secs for correct acknowledgement to come in, including sequence number!
-        start = time.time()
-        while(1):
-            # self.waitThread = Thread(target=self.waitT, name="SpheroVectorCtrlLoop")
-            # self.waitThread.daemon = True
-            # self.waitThread.start()
-            # self.p.waitForNotifications(1)
-            if self.sphero_delegate.notification_seq == self.sequence-1: # use one less than sequence, because _send function increments it for next send. 
-                if self.verbosity > 3:
-                    print("[RESP {}] {}".format(self.sequence-1, self.sphero_delegate.notification_ack))
-                self.sphero_delegate.clear_notification()
-                break
-            elif self.sphero_delegate.notification_seq >= 0:
-                print("Unexpected ACK. Expected: {}/{}, received: {}/{}".format(
-                    ack, self.sequence, self.sphero_delegate.notification_ack.split()[0],
-                    self.sphero_delegate.notification_seq),
-                    file=sys.stderr)
-            if time.time() > start + 10:
-                print("Timeout waiting for acknowledgement: {}/{}".format(ack, self.sequence), file=sys.stderr)
-                break
 
 # =======================================================================
 # The following functions are experimental:
@@ -466,7 +402,9 @@ class sphero_mini():
                                      ySpeed = 50, 
                                      deadTime = 50, # in 10 millisecond increments
                                      method = 0x01, # Must be 0x01        
-                                     callback = None):
+                                     callback = None,
+                                     seq=None):
+
         '''
         Appears to function the same as other Sphero models, however speed settings seem to have no effect. 
         NOTE: Setting to zero seems to cause bluetooth errors with the Sphero Mini/bluepy library - set to 
@@ -484,17 +422,22 @@ class sphero_mini():
             speed, then added to xThreshold, yThreshold to generate the final threshold value.
         '''
         
-        if self.verbosity > 2:
-            print("[SEND {}] Configuring collision detection".format(self.sequence))
-    
+        # if self.verbosity > 2:
+        print("[SEND {}] Configuring collision detection".format(seq))
+
+        self._run_receive = True
+        self._start_receiver()
+
+        payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime]
+
         self._send(self.API_V2_characteristic,
                    devID=deviceID['sensor'],
                    commID=sensorCommands['configureCollision'],
-                   payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime])
+                   payload=[method, xThreshold, xSpeed, yThreshold, ySpeed, deadTime],
+                   seq=seq)
 
         self.collision_detection_callback = callback
 
-        self.getAcknowledgement("Collision")
 
     def configureSensorStream(self): # Use default values
         '''
@@ -683,7 +626,8 @@ class MyDelegate(btle.DefaultDelegate):
                     checksum = (checksum + num) & 0xFF # bitwise "and to get modulo 256 sum of appropriate bytes
                 checksum = 0xff - checksum # bitwise 'not' to invert checksum bits
                 if checksum != chsum: # check computed checksum against that recieved in the packet
-                    print("Warning: notification packet checksum failed", self.notificationPacket, file=sys.stderr)
+                    print("Warning: notification packet checksum failed") #, self.notificationPacket, file=sys.stderr)
+
                     self.notificationPacket = [] # Discard this packet
                     return # exit
 

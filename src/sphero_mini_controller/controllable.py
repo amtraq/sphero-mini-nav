@@ -44,7 +44,8 @@ class ControllableSphero(TraceableSphero):
         self.collision_detected = False
 
         # LIGHTS
-        self.lights = True
+        self.lights = False
+
 
         # Virtual Dot
         self.dot_draw_radius = 2
@@ -60,26 +61,6 @@ class ControllableSphero(TraceableSphero):
         self._run_bounce = True
         self.border = 130
 
-        # SETUP
-        self._setup_sphero()
-
-    def _setup_sphero(self):
-        # self.device.set_option_flags(
-        #     motion_timeout=True,
-        #     tail_led=True,
-        #     vector_drive=True
-        # )
-        # self.device.set_motion_timeout(self._motion_timeout)
-        # self.device.set_rgb(0xFF, 0xFF, 0xFF, True)
-        # self.device.setLEDColor(red=255, green=0, blue=0)
-        pass
-        # self._configure_sensor_streaming()
-
-        # # Collision detection
-        # self.device.configure_collision_detection(x_t=0x80, y_t=0x80)
-        # self.device.set_collision_cb(self._on_collision_cb)
-
-
     def _configure_sensor_streaming(self):
         self._ssc.num_packets = SensorStreamingConfig.STREAM_FOREVER
         self._ssc.sample_rate = 20
@@ -94,18 +75,10 @@ class ControllableSphero(TraceableSphero):
         @wraps(cmd)
         def inner(self, *args, **kwargs):
             try:
-                return cmd(self, *args, **kwargs)
-            except sphero.SpheroRequestError:
-                # TODO: What todo here? - 5/3/14
-                print ("sphero request error", cmd.__name__)
-            except sphero.SpheroConnectionError:
-                print( "Connection error")
-                self._on_sphero_disconnected()
-            except sphero.SpheroFatalError:
-                print ("Sphero Fatal error")
-                self._on_sphero_disconnected()
-            except sphero.SpheroError:
-                print ("Sphero error")
+                pass
+                # return cmd(self, *args, **kwargs)
+            except:
+                print("Error in controllable")
         return inner
 
     def draw_graphics(self, image):
@@ -189,7 +162,7 @@ class ControllableSphero(TraceableSphero):
             button_press={
                 # constants.BUTTON_START: self.disconnect,
 
-                # constants.BUTTON_CIRCLE: self.calibrate,
+                constants.BUTTON_CIRCLE: self.calibrate,
                 constants.BUTTON_SQUARE: self.toggle_lights,
                 constants.BUTTON_CROSS: self.lights_random_color,
                 # constants.BUTTON_TRIANGLE: self.toggle_lights,
@@ -201,10 +174,10 @@ class ControllableSphero(TraceableSphero):
 
             },
             axis={
-                # constants.AXIS_JOYSTICK_R_VER: self.set_y,
-                # constants.AXIS_JOYSTICK_R_HOR: self.set_x,
-                # constants.AXIS_JOYSTICK_L_HOR: self.dot_x,
-                # constants.AXIS_JOYSTICK_L_VER: self.dot_y
+                constants.AXIS_JOYSTICK_R_VER: self.set_y,
+                constants.AXIS_JOYSTICK_R_HOR: self.set_x,
+                constants.AXIS_JOYSTICK_L_HOR: self.dot_x,
+                constants.AXIS_JOYSTICK_L_VER: self.dot_y
             }
         )
 
@@ -264,11 +237,11 @@ class ControllableSphero(TraceableSphero):
         self._ps4_controller = ps4_controller
         self._map_controls(ps4_controller)
 
-    @handle_exceptions
     def calibrate(self):
         self.is_calibrating = True
         self.vector_control.stop()
-        self.calibrate_direction()
+        # self.calibrate_direction()
+\
         self.vector_control.start()
         self.is_calibrating = False
 
@@ -279,7 +252,6 @@ class ControllableSphero(TraceableSphero):
 
     def set_y(self, value):
         #self.vector_control.speed = abs(value * 255.0)
-
         self.vector_control.vector.y = value * -75.0
 
     @handle_exceptions
@@ -287,22 +259,23 @@ class ControllableSphero(TraceableSphero):
         self.device.disconnect()
         self._on_sphero_disconnected()
 
-    @handle_exceptions
+    # @handle_exceptions
     def lights_random_color(self):
+        # print("rndom color")
         r = random.randrange(0, 255)
         g = random.randrange(0, 255)
         b = random.randrange(0, 255)
-        print ("Lights random color: ", self.device.setLEDColor(r, g, b).success)
+        self.device.setLEDColor(r, g, b)
 
-    @handle_exceptions
+    # @handle_exceptions
     def toggle_lights(self):
-        print("Toggle Lights")
+        # print("Toggle Lights")
         if not self.lights:
-            self.device.setLEDColor(255, 0, 0)
             self.lights = True
-            return
-        self.device.setLEDColor(0, 0, 0)
+            return self.device.setLEDColor(255, 0, 0)
         self.lights = False
+        return self.device.setLEDColor(0, 0, 0)
+
 
     @handle_exceptions
     def ping(self):
