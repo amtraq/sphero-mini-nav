@@ -94,18 +94,10 @@ class ControllableSphero(TraceableSphero):
         @wraps(cmd)
         def inner(self, *args, **kwargs):
             try:
-                return cmd(self, *args, **kwargs)
-            except sphero.SpheroRequestError:
-                # TODO: What todo here? - 5/3/14
-                print ("sphero request error", cmd.__name__)
-            except sphero.SpheroConnectionError:
-                print( "Connection error")
-                self._on_sphero_disconnected()
-            except sphero.SpheroFatalError:
-                print ("Sphero Fatal error")
-                self._on_sphero_disconnected()
-            except sphero.SpheroError:
-                print ("Sphero error")
+                pass
+                # return cmd(self, *args, **kwargs)
+            except:
+                print("Error in controllable")
         return inner
 
     def draw_graphics(self, image):
@@ -201,10 +193,10 @@ class ControllableSphero(TraceableSphero):
 
             },
             axis={
-                # constants.AXIS_JOYSTICK_R_VER: self.set_y,
-                # constants.AXIS_JOYSTICK_R_HOR: self.set_x,
-                # constants.AXIS_JOYSTICK_L_HOR: self.dot_x,
-                # constants.AXIS_JOYSTICK_L_VER: self.dot_y
+                constants.AXIS_JOYSTICK_R_VER: self.set_y,
+                constants.AXIS_JOYSTICK_R_HOR: self.set_x,
+                constants.AXIS_JOYSTICK_L_HOR: self.dot_x,
+                constants.AXIS_JOYSTICK_L_VER: self.dot_y
             }
         )
 
@@ -287,14 +279,15 @@ class ControllableSphero(TraceableSphero):
         self.device.disconnect()
         self._on_sphero_disconnected()
 
-    @handle_exceptions
+    # @handle_exceptions
     def lights_random_color(self):
+        print("rndom color")
         r = random.randrange(0, 255)
         g = random.randrange(0, 255)
         b = random.randrange(0, 255)
-        print ("Lights random color: ", self.device.setLEDColor(r, g, b).success)
+        print ("Lights random color: ", self.device.setLEDColor(r, g, b))
 
-    @handle_exceptions
+    # @handle_exceptions
     def toggle_lights(self):
         # print("Toggle Lights")
         if not self.lights:

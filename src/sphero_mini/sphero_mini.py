@@ -78,8 +78,9 @@ class sphero_mini():
             print("[INIT] Configuring API dectriptor")
         self.API_descriptor.write(struct.pack('<bb', 0x01, 0x00), withResponse = True)
 
-        self._start_receiver()
+        # self._start_receiver()
         self.wake()
+        # time.sleep(1)
 
         # Finished initializing:
         if self.verbosity > 1:
@@ -298,9 +299,11 @@ class sphero_mini():
 
     def _write(self, characteristic=None, devID=None, commID=None, seq=None, payload=[]):
         print("Writing SEQ #:" + str(seq))
-        event = self._send(characteristic,devID,commID,seq,payload)
+        # event = 
+        self._send(characteristic,devID,commID,seq,payload)
 
-        if event.wait(self.response_timeout):
+        # if event.wait(self.response_timeout):
+        if self._send(characteristic,devID,commID,seq,payload):
             # res = self._mark_as_sent(seq)
 
             # if res.success:
@@ -309,7 +312,9 @@ class sphero_mini():
             #     print('Request failed: ' + res.msg)
             return True
         else:
+            print("Cleaning up failed seq #" + str(seq))
             self._clean_up_failed_request(seq)
+            return False
 
     def _add_received_response(self, response_object):
         if (response_object > 0):
@@ -377,7 +382,7 @@ class sphero_mini():
         - End byte: always 0xD8
 
         '''
-        event = threading.Event()
+        # event = threading.Event()
 
         sendBytes = [sendPacketConstants["StartOfPacket"],
                     sum([flags["resetsInactivityTimeout"], flags["requestsResponse"]]),
@@ -412,21 +417,25 @@ class sphero_mini():
         try:
             #send to specified characteristic:
             characteristic.write(output, withResponse = True)
+            return True
         except:
             print("There was an error sending a command...")
+            return False
         self._mark_as_sent(seq)
-        return event
+        # return event
 
 
 
 
     def _response_reciever(self):
         while(1):
-            if (self.p.waitForNotifications(.5)):
-                # print("Received SEQ #:" + str(self.sphero_delegate.notification_seq))
-                self._add_received_response(self.sphero_delegate.notification_seq)
+            try:
+                if (self.p.waitForNotifications(.5)):
+                    # print("Received SEQ #:" + str(self.sphero_delegate.notification_seq))
+                    self._add_received_response(self.sphero_delegate.notification_seq)
                 # self._get_response(self.sphero_delegate.notification_seq)
-
+            except:
+                print("There was a problem waiting for a response...")
                 # if self.sphero_delegate.notification_seq == self.sequence-1: # use one less than sequence, because _send function increments it for next send. 
                     
                     # if self.verbosity > 3:
