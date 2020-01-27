@@ -37,11 +37,11 @@ class sphero_mini():
         self.sphero_delegate = MyDelegate(self, user_delegate) # Pass a reference to this instance when initializing
         self.p.setDelegate(self.sphero_delegate)
 
-        self._requests_waiting_response = {}
+        self._requests_waiting_response = []
         self._receiver_thread = None
         self.response_timeout = 25.0
         self._run_receive = True
-        self._packages = []   # outgoing packets
+        # self._packages = []   # outgoing packets
         # self._responses = []   # received responses
 
         self._response_lock = threading.RLock()
@@ -349,12 +349,14 @@ class sphero_mini():
         #         return res
 
     def _clean_up_failed_request(self, packet):
+        # try:
+        #     self._packages.remove(packet)
+        # except ValueError:
+        #     pass
+        
         try:
-            self._packages.remove(packet)
-        except ValueError:
-            pass
-        try:
-            self._requests_waiting_response.pop(packet)
+            with self._response_lock:
+                self._requests_waiting_response.remove(packet)
         except KeyError:
             pass
         
