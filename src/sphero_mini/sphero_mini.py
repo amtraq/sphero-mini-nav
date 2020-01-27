@@ -42,7 +42,7 @@ class sphero_mini():
         self.response_timeout = 25.0
         self._run_receive = True
         self._packages = []   # outgoing packets
-        self._responses = []   # received responses
+        # self._responses = []   # received responses
 
         self._response_lock = threading.RLock()
         self._seq_lock = threading.RLock()
@@ -301,7 +301,7 @@ class sphero_mini():
         event = self._send(characteristic,devID,commID,seq,payload)
 
         if event.wait(self.response_timeout):
-            res = self._get_response(seq)
+            res = self._mark_as_sent(seq)
 
             # if res.success:
             #     return res
@@ -318,17 +318,14 @@ class sphero_mini():
 
     def _add_received_response(self, response_object):
         with self._response_lock:
-            self._responses.append(response_object)
+            # self._responses.append(response_object)
+            self._requests_waiting_response.remove(response_object)
         self._notify_request_received(response_object)
 
     def _notify_request_received(self, seq):
-        try:
-            self._requests_waiting_response.pop(seq).set()
-        except KeyError:
-            # Probably received the message to late
-            pass
+        print("Seq #" + str(seq) + " ACKED")
 
-    def _get_response(self, seq):
+    def _mark_as_sent(self, seq):
         """
         Helper method
         Returns the response package with the given sequence number
@@ -338,13 +335,18 @@ class sphero_mini():
         :return: The request object
         """
         
-        if seq > 0x00:
-            print("removing " + str(seq))
-            with self._response_lock:
-                res = next((res for res in self._responses if res == seq), None)
-                if res:
-                    self._responses.remove(res)
-                return res
+        # add seq num to the queue of requests waiting a response
+        with self._response_lock:
+            if seq not in self._requests_waiting_response:
+                self._requests_waiting_response.append(seq)
+
+        # if seq > 0x00:
+        #     print("removing " + str(seq))
+        #     with self._response_lock:
+        #         res = next((res for res in self._responses if res == seq), None)
+        #         if res:
+        #             self._responses.remove(res)
+        #         return res
 
     def _clean_up_failed_request(self, packet):
         try:
@@ -385,11 +387,11 @@ class sphero_mini():
 
         # if not self._requests_waiting_response.keys in [seq]:
 
-        if seq not in self._requests_waiting_response.keys:
-            self._requests_waiting_response[seq] = event
-            self._packages.append(seq)
-        else:
-            print("Too many outgoing packages in send queue")
+        # if seq not in self._requests_waiting_response.keys:
+        #     self._requests_waiting_response[seq] = event
+        #     self._packages.append(seq)
+        # else:
+        #     print("Too many outgoing packages in send queue")
 
 
         # Compute and append checksum and add EOP byte:
