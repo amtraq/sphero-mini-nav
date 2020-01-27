@@ -298,11 +298,10 @@ class ControllableSphero(TraceableSphero):
     def toggle_lights(self):
         print("Toggle Lights")
         if not self.lights:
-            self.device.setLEDColor(255, 0, 0)
             self.lights = True
-            return
-        self.device.setLEDColor(0, 0, 0)
+            return self.device.setLEDColor(255, 0, 0)
         self.lights = False
+        return self.device.setLEDColor(0, 0, 0)
 
     @handle_exceptions
     def ping(self):
