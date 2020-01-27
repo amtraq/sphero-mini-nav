@@ -60,25 +60,6 @@ class ControllableSphero(TraceableSphero):
         self._run_bounce = True
         self.border = 130
 
-        # SETUP
-        self._setup_sphero()
-
-    def _setup_sphero(self):
-        # self.device.set_option_flags(
-        #     motion_timeout=True,
-        #     tail_led=True,
-        #     vector_drive=True
-        # )
-        # self.device.set_motion_timeout(self._motion_timeout)
-        # self.device.set_rgb(0xFF, 0xFF, 0xFF, True)
-        # self.device.setLEDColor(red=255, green=0, blue=0)
-        pass
-        # self._configure_sensor_streaming()
-
-        # # Collision detection
-        # self.device.configure_collision_detection(x_t=0x80, y_t=0x80)
-        # self.device.set_collision_cb(self._on_collision_cb)
-
 
     def _configure_sensor_streaming(self):
         self._ssc.num_packets = SensorStreamingConfig.STREAM_FOREVER
@@ -140,9 +121,11 @@ class ControllableSphero(TraceableSphero):
                 pass
 
     def dot_x(self, value):
+        print("dot x")
         self.dot_speed_x = value * 20.0
 
     def dot_y(self, value):
+        print("dot y")
         self.dot_speed_y = -value * 20.0
 
     def toggle_dot_drive(self):
@@ -266,12 +249,12 @@ class ControllableSphero(TraceableSphero):
 
     def set_x(self, value):
         #self.vector_control.turn_rate = math.tan(value) * -5
-
+        print("set x")
         self.vector_control.vector.x = value * 75.0
 
     def set_y(self, value):
         #self.vector_control.speed = abs(value * 255.0)
-
+        print("set y")
         self.vector_control.vector.y = value * -75.0
 
     @handle_exceptions
