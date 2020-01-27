@@ -82,7 +82,7 @@ class sphero_mini():
         self.resetHeading() # Reset heading
         self.stabilization(True) # Turn on stabilization
 
-        self.configureCollisionDetection(seq=self.seq)
+        # self.configureCollisionDetection(seq=self.seq)
 
         # Finished initializing:
         if self.verbosity > 1:
@@ -192,8 +192,8 @@ class sphero_mini():
         Note: the zero heading should be set at startup with the resetHeading method. Otherwise, it may
         seem that the sphero doesn't honor the heading argument
         '''
-        if self.verbosity > 2:
-            print("[SEND {}] Rolling with speed {} and heading {}".format(self.sequence, speed, heading))
+        # if self.verbosity > 2:
+        print("[SEND {}] Rolling with speed {} and heading {}".format(self.seq, speed, heading))
     
         if abs(speed) > 255:
             print("WARNING: roll speed parameter outside of allowed range (-255 to +255)")
@@ -283,7 +283,7 @@ class sphero_mini():
                 break
 
     def _write(self, characteristic=None, devID=None, commID=None, seq=None, payload=[]):
-        print("Writing SEQ #:" + str(seq))
+        # print("Writing SEQ #:" + str(seq))
         # event = 
         self._send(characteristic,devID,commID,seq,payload)
 

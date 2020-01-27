@@ -121,11 +121,9 @@ class ControllableSphero(TraceableSphero):
                 pass
 
     def dot_x(self, value):
-        print("dot x")
         self.dot_speed_x = value * 20.0
 
     def dot_y(self, value):
-        print("dot y")
         self.dot_speed_y = -value * 20.0
 
     def toggle_dot_drive(self):
@@ -249,12 +247,10 @@ class ControllableSphero(TraceableSphero):
 
     def set_x(self, value):
         #self.vector_control.turn_rate = math.tan(value) * -5
-        print("set x")
         self.vector_control.vector.x = value * 75.0
 
     def set_y(self, value):
         #self.vector_control.speed = abs(value * 255.0)
-        print("set y")
         self.vector_control.vector.y = value * -75.0
 
     @handle_exceptions
