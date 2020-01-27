@@ -205,11 +205,13 @@ class sphero_mini():
         speedL = speed & 0xFF
         headingH = (heading & 0xFF00) >> 8
         headingL = heading & 0xFF
+        self.stabilization(False) # Turn off stabilization
         self._write(characteristic = self.API_V2_characteristic,
                   devID = deviceID['driving'],
                   commID = drivingCommands["driveWithHeading"],
                   seq=self.seq,
                   payload = [speedL, headingH, headingL, speedH])
+        self.stabilization(True) # Turn off stabilization
 
     def resetHeading(self):
         '''
